@@ -1,0 +1,24 @@
+kind: miner
+metadata:
+  description: test miner 2
+  name: miner_test_2
+  schedule: 0 0 1 1 *
+  start_date:
+    day: 1
+    hour: 0
+    month: 1
+    year: 2020
+  target_symbols:
+    - VND
+    - VUA
+  timestep:
+    days: 1
+    hours: 0
+    minutes: 0
+spec:
+  input_streams:
+    - name: wifeed_bctc_thuyet_minh_chung_khoan
+    - name: calculate_bctc_nam_chung_khoan_1d0h0m_1
+    - name: wifeed_bctc_luu_chuyen_tien_te_chung_khoan
+  output_stream:
+    name: stream_test

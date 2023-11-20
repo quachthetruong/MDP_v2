@@ -1,0 +1,1 @@
+SELECT MAX(indexed_timestamp_) FROM {{ table_name }};

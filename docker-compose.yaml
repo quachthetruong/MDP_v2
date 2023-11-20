@@ -1,0 +1,105 @@
+version: "3"
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: always
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    ports:
+      - 5424:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  catalog-local-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dsai
+    volumes:
+      - catalog-local-db-volume:/var/lib/postgresql/data
+      - ./scripts/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    ports:
+      - 5423:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  catalog-local:
+    build: ./catalog
+    container_name: catalog-local
+    restart: always
+    ports:
+      - "8002:8002"
+    depends_on:
+      - catalog-local-db
+    volumes:
+      - ./catalog/app:/app
+
+  timescale-local:
+    build: ./timescale
+    container_name: timescale
+    restart: always
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./timescale/app:/app
+
+  backtest_worker:
+    build: ./backtest_worker
+    command: watchmedo auto-restart -d . -p 'tasks.py' -- celery -A tasks worker -l info -E
+    container_name: backtest_worker
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+    restart: always
+    depends_on:
+      - redis
+    volumes:
+      - ./backtest_worker/app:/app
+
+  flower:
+    build: ./backtest_worker
+    ports:
+      - "5555:5555"
+    command: watchmedo auto-restart -d . -p 'tasks.py' -- celery -A tasks flower
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      - redis
+    volumes:
+      - ./backtest_worker/app:/app
+
+volumes:
+  postgres-db-volume:
+  catalog-local-db-volume:
+  catalog:
+  timescale:
+  backtest_worker:

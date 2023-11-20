@@ -1,0 +1,21 @@
+{% if doanhthuquy %}Doanh thu {{quy}}/{{nam}} của doanh nghiệp đạt {{doanhthuquy}} {{ 'tăng' if doanhthutangtruong >= 0 else 'giảm' }} {{doanhthutangtruong}} so với quý trước,{% endif %} 
+{%- if luykedoanhthu -%}Lũy kế doanh thu đạt {{luykedoanhthu}} tỷ VND
+{%- if luykedoanhthutangtruong is not none -%}
+{{ ', tăng' if luykedoanhthutangtruong>=0 else ', giảm'}} {{luykedoanhthutangtruong}} tỷ VND so với cùng kỳ. 
+{%- else -%}.
+{%- endif %}
+{%- endif %}
+{%- if loinhuandongquy %}
+Lợi nhuận ròng {{quy}}/{{nam}} của doanh nghiệp đạt {{loinhuanrongquy}}
+    {%- if loinhuantangtruong is not none -%}
+        , {{ 'tăng' if loinhuantangtruong>=0 else 'giảm'}} {{loinhuantangtruong}} so với cùng kỳ. 
+    {%- else -%}.
+    {%- endif %} 
+{%- endif %}
+{%- if luykeloinhuan %}
+Lũy kế lợi nhuận ròng đạt {{luykeloinhuan}} tỷ VND
+    {%- if luykeloinhuantangtruong is not none -%}
+        , {{ 'tăng' if luykeloinhuantangtruong>=0 else 'giảm'}} {{luykeloinhuantangtruong}} tỷ VND so với cùng kỳ. 
+    {%- else -%}.
+    {%- endif %}
+{%- endif %} 
