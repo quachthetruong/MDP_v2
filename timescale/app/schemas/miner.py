@@ -38,6 +38,18 @@ class MinerMetadata(BaseModel):
         cron_instance = Cron()
         cron_instance.from_string(schedule)
         return schedule
+    
+    @field_validator('start_date', mode='after')
+    @classmethod
+    def convert_month_js_py(cls, start_date):
+        if start_date is None:
+            return None
+        if not isinstance(start_date, dict):
+            raise ValueError("start_date must be dict or None")
+        if "month" in start_date:
+            start_date["month"]+=1#javascript month start from 0 to 11, python month start from 1 to 12
+        return start_date
+        
 
 
 class MinerSpec(BaseModel):
@@ -45,6 +57,13 @@ class MinerSpec(BaseModel):
     output_stream: Optional[Union[StreamCatalog,
                                   StreamMetadata, StreamBase]] = None
 
+class MinerSetupSpec(BaseModel):
+    input_streams: List[str] = []
+    
+class MinerSetupCatalog(BaseModel):
+    kind:str="miner"
+    metadata:MinerMetadata
+    spec:MinerSetupSpec
 
 class MinerCatalog(BaseModel):
     kind: str = "miner"
@@ -60,7 +79,7 @@ class MinerStreamRelationship(BaseModel):
 
 class Miner(BaseModel):
     catalog: MinerCatalog
-    data: List[Any] = []
+    streams:List[Stream]
 
 
 class Code(BaseModel):
@@ -70,4 +89,4 @@ class Code(BaseModel):
 class HashData(BaseModel):
     route:str
     miner_config:MinerCatalog
-    code:Code
+    body:Optional[Any]=None

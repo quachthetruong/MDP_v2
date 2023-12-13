@@ -14,5 +14,7 @@ TIMESCALE_DB_URL = 'postgresql://postgres:nIV0JOWbNLpZuFk0lHkq1uF02AKvIryLAV9USA
 MOCK_TIMESCALE_DB_URL = 'postgresql://airflow:airflow@postgres:5432/dsai'
 CATALOG_SERVICE_URL = 'http://catalog-local:8002/'
 
+CATALOG_DB_URL='postgresql://postgres:postgres@catalog-local-db:5432/dsai'
+REDSHIFT_DB_URL='redshift://awsuser:RGYcH3Yoyqo5fKrk@poc-redshift-free-trial.cir6kkgprzvy.ap-southeast-1.redshift.amazonaws.com:5439/dev'
 
 RECORD_LIMIT = 100

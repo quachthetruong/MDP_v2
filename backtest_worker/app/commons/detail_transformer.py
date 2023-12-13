@@ -66,8 +66,12 @@ class DetailTransformer:
         for index, target_symbol in enumerate(self.target_symbols):
             mini_nodes.append(MiniNode(symbol=target_symbol, data=[]))
             mini_node_indexes[target_symbol] = index
+        
+        # if not return, node.dataframe.groupby("symbol_") will throw error keyerror 'symbol_'
+        if node.dataframe.empty:
+            return DetailNode(name=node.name, source=node.source, mini_nodes=mini_nodes)
 
-        for symbol, group_df in node.dataframe.groupby('symbol_'):
+        for symbol, group_df in node.dataframe.groupby("symbol_"):
             group = self.convert_to_records_format(dataframe=group_df)
             mini_nodes[mini_node_indexes[symbol]] = MiniNode(
                 symbol=symbol, data=group)

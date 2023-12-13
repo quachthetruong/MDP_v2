@@ -7,4 +7,4 @@
 # from miners.dnse_BCTC_bank_quarterly_miner import DnseBCTCBankQuarterlyMiner
 
 # from miners.portfolio_calculate_miner import PortfolioCalculator
-from miners.dnse_BCTC_insurance_quarterly_miner import DnseBCTCInsuranceQuarterlyMiner
+# from miners.dnse_BCTC_insurance_quarterly_miner import DnseBCTCInsuranceQuarterlyMiner

@@ -1,39 +1,22 @@
 from datetime import datetime
-import os
-import time
-from celery import Celery
-import logging
 
-import requests
+import logging
+from celery_instance import celery
+
+from schemas.function import StreamExtract
 from miners.processor.transformProcessor import TransformProcessor
 from miners.simulator.backtest_simulator import BacktestSimulator
 from miners.processor.extractProcessor import ExtractProcessor
 from miners.processor.setUpProcessor import SetUpProcessor
 from miners.pipeline.minerPipeline import MinerPipeline
 from schemas.exception import InvalidNode
-
-from generators.generator import generate_miner, get_class
 from schemas.miner import Code, MinerCatalog
-from miners.miner_back_test_base import MinerBackTestBase
 from commons.detail_transformer import DetailTransformer
 
 import gzip
 logger=logging.getLogger(__name__)
 
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379'),
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379')
 
-class CeleryConfig:
-    # task_serializer = "pickle"
-    # result_serializer = "pickle"
-    # event_serializer = "json"
-    # accept_content = ["application/json", "application/x-python-serialize"]
-    # result_accept_content = ["application/json", "application/x-python-serialize"]
-    task_compression = 'gzip'
-
-celery = Celery('tasks', broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)# celery.config_from_object(CeleryConfig)
-celery.conf.update(task_compression="gzip")
-celery.conf.update(result_compression="gzip")
 
 @celery.task(name='tasks.hello')
 def hello():
@@ -47,6 +30,38 @@ def hello():
         print(f"kiem tra hello {e}")
         raise e
         return str(e)
+    
+@celery.task(name='tasks.extract')
+def extract(miner_config,extract_streams):
+    try:
+        miner_config=MinerCatalog(**miner_config)
+        extract_streams=[StreamExtract(**extract_stream) for extract_stream in extract_streams]
+        # ### miner base
+        pipeline=MinerPipeline(miner_config=miner_config)
+        print("pipeline")
+        # ### __init__
+        pipeline.add_processer(SetUpProcessor())
+        print("SetUpProcessor")
+        # ### get_input
+        pipeline.add_processer(ExtractProcessor(extract_streams=extract_streams))
+        print("ExtractProcessor")
+        print("mimic_backrun",miner_config.metadata.start_date)
+
+        # ### run
+        backtest_simulator=BacktestSimulator(
+            schedule=miner_config.metadata.schedule, 
+            start_date=datetime(**miner_config.metadata.start_date),
+            end_date=datetime.now())
+        
+        stages = backtest_simulator.mimic_backrun(pipeline=pipeline)
+        # ### split result into multiple symbol
+        # detail_stages= DetailTransformer(stages=pipeline.stages, target_symbols=miner_config.metadata.target_symbols).transform()
+        # detail_stages_json=[detail_stage.model_dump_json() for detail_stage in detail_stages]
+        # # detail_stages_gzip=gzip.compress(str(detail_stages_json).encode())
+        # return detail_stages_json
+    except Exception as e:
+        logger.error(f"error catch {str(e)}")
+        raise e
 
 @celery.task(name='tasks.mimic_get_input')
 def mimic_get_input(miner_config, code):
@@ -54,6 +69,7 @@ def mimic_get_input(miner_config, code):
         # logging.info(f"miner_config {miner_config}")
         miner_config=MinerCatalog(**miner_config)
         code=Code(**code)
+        # print(f"code {code}")
         ### miner base
         pipeline=MinerPipeline(miner_config=miner_config)
         ### __init__
@@ -108,3 +124,5 @@ def mimic_process(miner_config, code):
     except Exception as e:
         logger.error(f"error catch {str(e)}")
         raise e
+    
+

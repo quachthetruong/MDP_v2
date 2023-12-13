@@ -5,6 +5,7 @@ import config
 from commons.utils import generated_identified_name
 from schemas.storage_base import StorageType
 from pydantic import field_validator
+from enum import Enum, auto
 
 
 valid_types = set(['text', 'timestamp', 'numeric', 'float'])
@@ -78,3 +79,8 @@ class Stream(BaseModel):
     kind: str = "stream"
     metadata: StreamMetadata
     spec: StreamSpec
+
+class StreamFormat(Enum):
+    Full = auto()
+    Metadata = auto()
+    Base = auto()

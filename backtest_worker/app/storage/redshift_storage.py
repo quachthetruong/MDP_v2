@@ -1,10 +1,12 @@
 from pandas import DataFrame
+from services.redshift_service import RedshiftService
+from services.timescale_service import TimescaleService
 
 from storage.storage_base import StorageBase
 from common.utils import *
 from common import config
 from streams.stream_cfg import StreamCfg
-from typing import Union, List
+from typing import Iterator, Union, List
 
 
 
@@ -12,7 +14,7 @@ from typing import Union, List
 class RedshiftStorage(StorageBase):
 
     def __init__(self, stream_config: Union[dict, StreamCfg]):
-
+        self.backend = RedshiftService()
         # legacy compatibility
         if isinstance(stream_config, dict):
             if 'same_table_name' not in stream_config:
@@ -31,6 +33,8 @@ class RedshiftStorage(StorageBase):
                 stream_config.version
             )
 
+        self.name_fields = [item[0] for item in stream_config.stream_fields]
+
         super().__init__()
 
     def append(self, df_record: DataFrame, commit_every=1000):
@@ -38,28 +42,19 @@ class RedshiftStorage(StorageBase):
 
     def get_record(
         self,
-        indexed_timestamp,
-        symbol_column=config.SYSTEM_SYMBOL_COL,
-        target_symbols=None,
-        filter_query=None
-    ):
-        raise NotImplementedError("Not supported at the moment!")
-
-    def get_record_v2(
-        self,
         indexed_timestamp: str,
-        symbol_column: str = config.SYSTEM_SYMBOL_COL,
-        timestamp_column: str = config.SYSTEM_TIMESTAMP_COL,
+        symbol_column: str = "time",
+        timestamp_column: str = "symbol",
         target_symbols: List = None,
         filter_query: str = None
     ):
-        return self.backend.get_record_v2(
-            table_name=self.table_name,
-            indexed_timestamp=indexed_timestamp,
-            symbol_column=symbol_column,
-            timestamp_column=timestamp_column,
+        return self.backend.get_record(
+            table_name=self.table_name, indexed_timestamp=indexed_timestamp,
+            symbol_column=symbol_column, timestamp_column=timestamp_column,
             target_symbols=target_symbols, filter_query=filter_query
+            
         )
+
 
     def get_record_range(
         self,

@@ -44,7 +44,13 @@ class MinerSpec(BaseModel):
     input_streams: List[Union[Stream, StreamMetadata, StreamBase]] = []
     output_stream: Optional[Union[Stream, StreamMetadata, StreamBase]] = None
 
+class MinerSetupSpec(BaseModel):
+    input_streams: List[str] = []
 
+class MinerSetup(BaseModel):
+    kind:str="miner"
+    metadata:MinerMetadata
+    spec:MinerSetupSpec
 class Miner(BaseModel):
     kind: str = "miner"
     metadata: MinerMetadata

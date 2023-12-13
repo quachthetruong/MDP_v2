@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.session import create_session
 
-from schemas.miner import Miner, Code
+from schemas.miner import Miner, Code, MinerSetup
 from services.miner import MinerService
 from commons.logger import logger
 
@@ -61,7 +61,7 @@ async def save_miner_full(
 
 @router.post("/verify")
 async def verify_miner(
-    miner: Miner,
+    miner: MinerSetup,
     session: Session = Depends(create_session),
 ) -> Miner:
     """verify stream yaml"""

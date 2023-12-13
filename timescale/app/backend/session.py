@@ -12,7 +12,7 @@ from backend.config import config
 
 # create session factory to generate new database sessions
 SessionFactory = sessionmaker(
-    bind=create_engine(config.database.dsn, pool_pre_ping=True),
+    bind= create_engine(config.database.timescale, pool_pre_ping=True),
     autocommit=False,
     autoflush=False,
     expire_on_commit=False,
@@ -37,4 +37,4 @@ def create_session() -> Iterator[Session]:
     finally:
         session.close()
 meta = MetaData()
-meta.reflect(bind=create_engine(config.database.dsn, pool_pre_ping=True))
+meta.reflect(bind=create_engine(config.database.timescale, pool_pre_ping=True))

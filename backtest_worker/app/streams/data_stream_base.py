@@ -60,7 +60,9 @@ class DataStreamBase:
         return self
 
     def assign_source_node(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        # dataframe.__doc__ = self.identified_name
         dataframe.__doc__ = self.signal_name
+        print("doc__nam",dataframe.__doc__)
         return dataframe
 
     def append(self, record, commit_every=1000):

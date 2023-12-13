@@ -41,7 +41,7 @@ class SetUpProcessor(MinerProcessor):
         input_streams = {}
         for cfg in input_cfg:
             input_stream = DataStreamBase.from_config(stream_cfg=cfg)
-            input_streams[input_stream.signal_name] = input_stream
+            input_streams[input_stream.signal_name] = input_stream #use input_stream.metadata.name
         return input_streams
 
     def execute(self,timestamp:datetime,data:List[StreamCatalog]=[])->Dict[str,DataStreamBase]:

@@ -17,10 +17,10 @@ reverse_dtype_mapping = {
     'timestamp': 'datetime64[ns]'
 }
 
-def map_type(type: str,mapping:Dict[str,str]):
-    if type in mapping:
-        return mapping[type]
-    return type
+def map_type(data_type: str,mapping:Dict[str,str]):
+    if data_type in mapping:
+        return mapping[data_type]
+    return data_type
 
 class StreamField(BaseModel):
     stream_id: Optional[int]=Field(None, description="not required")
@@ -31,5 +31,5 @@ class StreamField(BaseModel):
     @validator('type',pre=True,always=False)
     @classmethod
     def check_postgres_type(cls, type):
-        return map_type(type=type,mapping=dtype_mapping)
+        return map_type(data_type=type,mapping=dtype_mapping)
     

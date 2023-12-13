@@ -1,12 +1,12 @@
 import requests
 from sqlalchemy.orm import Session
 from commons.logger import logger
-from typing import  List
+from typing import  List, Union
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import and_, select
 
 from models.stream import StreamCfgModel, StreamFieldsModel
-from schemas.stream import Stream, StreamField, StreamMetadata, StreamSpec
+from schemas.stream import Stream, StreamBase, StreamField, StreamFormat, StreamMetadata, StreamSpec
 from services.base import (
     BaseDataManager,
     BaseService,
@@ -17,15 +17,26 @@ class StreamService(BaseService):
         super().__init__(session)
         self.streamDataManager= StreamDataManager(session)
 
+    def extract_stream_spec(self,stream_cfg:StreamCfgModel,format:StreamFormat)->Union[Stream,StreamMetadata,StreamBase]:
+        if format==StreamFormat.Metadata:
+                formated_stream=StreamMetadata(**stream_cfg.to_dict())
+        elif format==StreamFormat.Base:
+            formated_stream=StreamBase(**stream_cfg.to_dict())
+        elif format==StreamFormat.Full:
+            stream_fields=[StreamField(**stream_field.to_dict()) for stream_field in stream_cfg.stream_fields]
+            metadata=StreamMetadata(**stream_cfg.to_dict())
+            spec=StreamSpec(stream_fields=stream_fields)
+            formated_stream=Stream(metadata=metadata,spec=spec)
+        return formated_stream
+
+
     def get_streams(self, stream_ids: List[int]=[],stream_names: List[str]=[]) -> List[Stream]:
         streams=self.streamDataManager.get_stream_full(stream_ids,stream_names)
-        return [Stream(metadata=StreamMetadata(**stream.to_dict()),
-                spec=StreamSpec(stream_fields=[StreamField(**stream_field.to_dict()) for stream_field in stream.stream_fields]))
-                 for stream in streams]
+        return [self.extract_stream_spec(stream,format=StreamFormat.Full) for stream in streams]
 
     def get_all_stream(self,limit:int=10,offset:int=0) -> List[StreamMetadata]:
         listStreamMetadata=self.streamDataManager.get_all_spec(limit=limit,offset=offset)
-        return [StreamMetadata(**metadata.to_dict()) for metadata in listStreamMetadata]
+        return [self.extract_stream_spec(stream,format=StreamFormat.Full) for stream in listStreamMetadata]
     
     def save_stream(self,stream:Stream)->Stream:
         metadata,spec=stream.metadata,stream.spec

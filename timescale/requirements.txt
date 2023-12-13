@@ -10,6 +10,9 @@ cron-converter==1.0.1
 Jinja2==3.1.2
 celery==5.3.4
 celery[redis]
+# sqlalchemy-redshift==0.8.14
+redshift-connector==2.0.917
+orjson==3.9.10 -
 
 pytest==7.2.0
 pytest-mock==3.10.0

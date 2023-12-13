@@ -1,4 +1,3 @@
-from enum import Enum, auto
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from generators.generator import generate_miner
@@ -11,19 +10,16 @@ from commons.file import  get_files,get_all_files
 
 
 from models.miner import MinerCfgModel, MinerStreamRelationshipModel
-from schemas.miner import Miner, MinerMetadata, MinerSpec, MinerStreamRelationship, Code
+from schemas.miner import Miner, MinerMetadata, MinerSetup, MinerSpec, MinerStreamRelationship, Code
 from services.base import (
     BaseDataManager,
     BaseService,
 )
 from models.stream import StreamCfgModel
-from schemas.stream import Stream, StreamBase, StreamField, StreamMetadata, StreamSpec
+from schemas.stream import Stream, StreamBase, StreamField, StreamFormat, StreamMetadata, StreamSpec
 from services.stream import StreamService
 
-class StreamFormat(Enum):
-    Full = auto()
-    Metadata = auto()
-    Base = auto()
+
 
 
 class MinerService(BaseService):
@@ -36,18 +32,8 @@ class MinerService(BaseService):
     def extract_miner_spec(self,miner:MinerCfgModel,format:StreamFormat)->MinerSpec:
         input_streams,output_stream=[],None
         for stream in miner.streams:
-            # logger.info(f"stream check:{stream.to_dict()}")
-
-            if format==StreamFormat.Metadata:
-                formated_stream=StreamMetadata(**stream.stream_cfg.to_dict())
-            elif format==StreamFormat.Base:
-                formated_stream=StreamBase(**stream.stream_cfg.to_dict())
-            elif format==StreamFormat.Full:
-                stream_fields=stream.stream_cfg.stream_fields
-                stream_fields=[StreamField(**stream_field.to_dict()) for stream_field in stream_fields]
-                metadata=StreamMetadata(**stream.stream_cfg.to_dict())
-                spec=StreamSpec(stream_fields=stream_fields)
-                formated_stream=Stream(metadata=metadata,spec=spec)
+            stream_cfg:StreamCfgModel=stream.stream_cfg
+            formated_stream=self.streamService.extract_stream_spec(stream_cfg,format)
             if stream.type=="input":
                 input_streams.append(formated_stream)
             else:
@@ -103,12 +89,12 @@ class MinerService(BaseService):
     #     if len(streams)==0:
     #         raise Exception(f"stream {stream_name} not found")
     #     return streams[0]
-    def verify(self,miner:Miner)->Miner:
+    def verify(self,miner:MinerSetup)->Miner:
         logger.info(f"start verify")
         metadata,spec=miner.metadata,miner.spec
-        input_streams=self.streamService.get_streams(stream_names=[stream.name for stream in spec.input_streams]) 
+        input_streams=self.streamService.get_streams(stream_names=[stream for stream in spec.input_streams]) 
         logger.info(f"return get_streams")
-        return Miner(metadata=metadata,spec={"input_streams":input_streams,"output_stream":spec.output_stream})
+        return Miner(metadata=metadata,spec={"input_streams":input_streams})
     
     def save_file(self,miner_config:Miner,code:Code)->str:
         file_path =generate_miner(minerCatalog=miner_config,get_inputs_str=code.get_input,

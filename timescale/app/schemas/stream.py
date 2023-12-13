@@ -59,8 +59,8 @@ class StreamMetadata(StreamBase):
         if 'same_table_name' in data and data['same_table_name']:
             data['name'] = data['signal_name']
         else:
-            # logger.info(
-            #     f"signal_name: {data['signal_name']} timestep: {data['timestep']} version: {data['version']}")
+            logger.info(
+                f"signal_name: {data['signal_name']} timestep: {data['timestep']} version: {data['version']}")
             data['name'] = generated_identified_name(
                 data['signal_name'], data['timestep'], data['version'])
         return data

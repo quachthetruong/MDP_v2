@@ -13,10 +13,11 @@ from sqlalchemy.orm import Session
 
 from backend.session import create_session
 
-from schemas.miner import Miner, MinerCatalog
+from schemas.miner import Miner, MinerCatalog, MinerSetupCatalog
 from services.miner import MinerService
 from schemas.other import ValidateForm
 from schemas.miner import Code
+from schemas.function import MinerExtract
 from validator.exception import miner_exception_handler
 from worker import celery
 
@@ -28,15 +29,17 @@ class BackTestRequest(BaseModel):
     code: Code
 
 
-global_variable = {}
-
 
 @router.post("/setup")
 async def setup_miner(
-        miner_config: MinerCatalog,
+        miner_config: MinerSetupCatalog,
         session: Session = Depends(create_session)) -> Miner:
     return MinerService(session).setUp(miner_config=miner_config)
 
+
+@router.post("/extract")
+async def extract(MinerExtract: MinerExtract, session: Session = Depends(create_session)):
+    return MinerService(session).extract(miner_config=MinerExtract.minerCatalog, extract_streams=MinerExtract.extractStreams)
 
 @router.post("/test_get_input")
 async def test_get_inputs(backTestRequest: BackTestRequest, session: Session = Depends(create_session)):

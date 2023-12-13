@@ -13,7 +13,8 @@ class DatabaseConfig(BaseModel):
             DSN for target database.
     """
 
-    dsn: str = config.TIMESCALE_DB_URL
+    timescale: str = config.TIMESCALE_DB_URL
+    redshift: str = config.REDSHIFT_DB_URL
 
 
 class Config(BaseSettings):

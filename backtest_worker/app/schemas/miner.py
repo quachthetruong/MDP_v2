@@ -67,8 +67,9 @@ class Code(BaseModel):
     process_per_symbol: str
 
 class HashData(BaseModel):
+    route:str
     miner_config:MinerCatalog
-    code:Code
+    body:Optional[Any]=None
 
 
 class CeleryTaskResult(BaseModel):

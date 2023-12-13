@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from common import config
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from typing import Type
 from common.utils import convert_dict_to_timedelta
 from storage.storage_base import StorageBase
@@ -29,7 +29,7 @@ class StreamCfg(BaseModel):
     version: str
     to_create: bool = True
     symbol_field: str = config.SYSTEM_SYMBOL_COL
-    stream_fields: List[tuple] = []
+    stream_fields: List[Tuple[str,...]] = []
     storage_backend: Type[StorageBase]
 
 

@@ -7,7 +7,7 @@ from common import config
 from streams.stream_cfg import StreamCfg
 from typing import Dict, Iterator, List, Union
 from backend.session import create_session
-from services.stream import StreamService
+from services.timescale_service import TimescaleService
 
 
 
@@ -15,7 +15,7 @@ class DatabaseStorage(StorageBase):
 
     def __init__(self, stream_config: Union[dict, StreamCfg]):
         session: Iterator[Session] = create_session()
-        self.backend = StreamService(next(session))
+        self.backend = TimescaleService(next(session))
         if isinstance(stream_config, dict):
             if 'same_table_name' not in stream_config:
                 stream_config['same_table_name'] = False
@@ -49,8 +49,8 @@ class DatabaseStorage(StorageBase):
     def get_record(
         self,
         indexed_timestamp: str,
-        symbol_column: str = config.SYSTEM_SYMBOL_COL,
-        timestamp_column: str = config.SYSTEM_TIMESTAMP_COL,
+        symbol_column: str = "indexed_timestamp_",
+        timestamp_column: str = "symbol_",
         target_symbols: List = None,
         filter_query: str = None
     ):

@@ -19,11 +19,15 @@ router = APIRouter()
  
 
 @router.get("/")
-async def get_all_stream(name:str,symbol:str,session: Session = Depends(create_session)):
+async def get_all_stream(name:StreamCatalog,symbol:str="",session: Session = Depends(create_session)):
     """Get all stream metadata in catalog."""
     stream_names=list([item for item in filter(None,name.split(','))])
     target_symbols=list([item for item in filter(None,symbol.split(','))])
     return StreamService(session).get_streams(stream_names=stream_names,target_symbols=target_symbols)
+
+@router.post("/detail")
+async def get_stream_by_catalog(streamCatalog:StreamCatalog,session: Session = Depends(create_session)):
+    return StreamService(session).getStreamByCatalog(streamCatalog=streamCatalog)
 
 @router.post("/create_table")
 async def create_table(streamCatalog:StreamCatalog):
