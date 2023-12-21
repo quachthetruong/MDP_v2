@@ -65,10 +65,7 @@ async def verify_miner(
     session: Session = Depends(create_session),
 ) -> Miner:
     """verify stream yaml"""
-    a = MinerService(session).verify(miner)
-    logger.info("done catalog verify")
-    return a
-
+    return MinerService(session).verify(miner)
 
 @router.post("/save_file")
 async def save_file(testProcess: SaveRequest, session: Session = Depends(create_session)):

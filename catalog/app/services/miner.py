@@ -93,7 +93,7 @@ class MinerService(BaseService):
         logger.info(f"start verify")
         metadata,spec=miner.metadata,miner.spec
         input_streams=self.streamService.get_streams(stream_names=[stream for stream in spec.input_streams]) 
-        logger.info(f"return get_streams")
+        logger.info(f"return get_streams {spec.input_streams} input_streams {[stream.metadata.name for stream in input_streams]}")
         return Miner(metadata=metadata,spec={"input_streams":input_streams})
     
     def save_file(self,miner_config:Miner,code:Code)->str:

@@ -71,10 +71,23 @@ services:
       start_period: 20s
       timeout: 10s
 
-  backtest_worker:
+  backtest_worker_1:
     build: ./backtest_worker
     command: watchmedo auto-restart -d . -p 'tasks.py' -- celery -A tasks worker -l info -E
-    container_name: backtest_worker
+    container_name: backtest_worker_1
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+    restart: always
+    depends_on:
+      - redis
+    volumes:
+      - ./backtest_worker/app:/app
+
+  backtest_worker_2:
+    build: ./backtest_worker
+    command: watchmedo auto-restart -d . -p 'tasks.py' -- celery -A tasks worker -l info -E
+    container_name: backtest_worker_2
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis
@@ -103,9 +116,24 @@ services:
     volumes:
       - ./backtest_worker/app:/app
 
+  scheduler:
+    build: ./dask_worker
+    hostname: scheduler
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    command: ["dask-scheduler"]
+
+  worker:
+    build: ./dask_worker
+    command: ["dask-worker", "tcp://scheduler:8786","--nworkers", "1", "--nthreads", "2", "--memory-limit", "3.5GB", "--death-timeout", "60"]
+    deploy:
+      replicas: 3
+ 
+    # For Docker swarm you can specify multiple workers, this is ignored by `docker-compose up`
+
 volumes:
   postgres-db-volume:
   catalog-local-db-volume:
   catalog:
   timescale:
-  backtest_worker:
