@@ -19,8 +19,9 @@ def format_timedelta(t_delta, fmt):
 
 class DataStreamBase:
 
-    def __init__(self, signal_name: str, timestep: timedelta, version: str, stream_record_fields: List[tuple], timestamp_field='timestamp',
+    def __init__(self,target_symbols:List[str], signal_name: str, timestep: timedelta, version: str, stream_record_fields: List[tuple], timestamp_field='timestamp',
                  symbol_field='symbol'):
+        self.target_symbols=target_symbols # Adding for backtest
         self.signal_name = signal_name
         self.timestep = timestep
         self.version = version
@@ -35,7 +36,7 @@ class DataStreamBase:
         # assert self.timestamp_field == config.SYSTEM_TIMESTAMP_COL or self.timestamp_field in self.name_fields
 
     @classmethod
-    def from_config(cls, stream_cfg: StreamCfg):
+    def from_config(cls,target_symbols:List[str], stream_cfg: StreamCfg):
         assert isinstance(stream_cfg, StreamCfg)
 
         # if isinstance(cfg, dict):
@@ -43,6 +44,7 @@ class DataStreamBase:
         # else:
         #     stream_cfg = cfg
         return cls(
+            target_symbols=target_symbols,
             signal_name=stream_cfg.signal_name,
             timestep=stream_cfg.timestep,
             version=stream_cfg.version,
@@ -62,7 +64,7 @@ class DataStreamBase:
     def assign_source_node(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         # dataframe.__doc__ = self.identified_name
         dataframe.__doc__ = self.signal_name
-        print("doc__nam",dataframe.__doc__)
+        # print("doc__nam",dataframe.__doc__)
         return dataframe
 
     def append(self, record, commit_every=1000):
@@ -75,8 +77,8 @@ class DataStreamBase:
         # if len(record.index) > 0:
             # self.backend.append(record, commit_every)
 
-    def get_record(self, indexed_timestamp: str, target_symbols: List[str], filter_query: str) -> pd.DataFrame:
-        return self.assign_source_node(self.backend.get_record(indexed_timestamp, symbol_column=self.symbol_field, timestamp_column=self.timestamp_field, target_symbols=target_symbols, filter_query=filter_query))
+    def get_record(self, indexed_timestamp: str, filter_query: str=None) -> pd.DataFrame:
+        return self.assign_source_node(self.backend.get_record(indexed_timestamp, symbol_column=self.symbol_field, timestamp_column=self.timestamp_field, target_symbols=self.target_symbols, filter_query=filter_query))
 
     # def get_record_v2(self, indexed_timestamp, target_symbols, filter_query) -> pd.DataFrame:
     #     return self.backend.get_record_v2(indexed_timestamp, symbol_column=self.symbol_field, timestamp_column=self.timestamp_field, target_symbols=target_symbols, filter_query=filter_query)
@@ -84,9 +86,9 @@ class DataStreamBase:
     # def get_record_range(self, included_min_timestamp, included_max_timestamp, target_symbols, filter_query) -> pd.DataFrame:
     #     return self.backend.get_record_range(included_min_timestamp, included_max_timestamp, symbol_column=self.symbol_field, target_symbols=target_symbols, filter_query=filter_query)
 
-    def get_record_range(self, included_min_timestamp: str, included_max_timestamp: str, target_symbols: List[str], filter_query: str) -> pd.DataFrame:
+    def get_record_range(self, included_min_timestamp: str, included_max_timestamp: str, filter_query: str=None) -> pd.DataFrame:
         return self.assign_source_node(self.backend.get_record_range(
-            included_min_timestamp, included_max_timestamp, symbol_column=self.symbol_field, timestamp_column=self.timestamp_field, target_symbols=target_symbols, filter_query=filter_query))
+            included_min_timestamp, included_max_timestamp, symbol_column=self.symbol_field, timestamp_column=self.timestamp_field, target_symbols=self.target_symbols, filter_query=filter_query))
 
     def get_distinct_symbol(self, symbol_column, table_name):
         return self.backend.get_distinct_symbol(symbol_column, table_name)

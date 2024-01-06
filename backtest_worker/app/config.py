@@ -13,7 +13,7 @@ SYSTEM_SYMBOL_COL = 'symbol_'
 TIMESCALE_DB_URL = 'postgresql://postgres:nIV0JOWbNLpZuFk0lHkq1uF02AKvIryLAV9USAvkvLT9AAcoIbFK0ydZGabETOKK@103.151.242.52:5432/dsai'
 
 MOCK_TIMESCALE_DB_URL = 'postgresql://airflow:airflow@postgres:5432/dsai'
-CATALOG_SERVICE_URL = 'http://10.68.1.158:8002/'
+CATALOG_SERVICE_URL = 'http://catalog-local:8002/'
 
 
 RECORD_LIMIT = 100

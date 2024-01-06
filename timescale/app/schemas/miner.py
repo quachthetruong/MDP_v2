@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from cron_converter import Cron
 from schemas.stream import Stream, StreamBase, StreamCatalog, StreamMetadata
-from schemas.other import TimeStep, StartDate
+from schemas.other import TimeStep, ScheduleDate
 
 
 class MinerMetadata(BaseModel):
@@ -13,7 +13,8 @@ class MinerMetadata(BaseModel):
     description: str
     target_symbols: List[str]
     timestep: TimeStep = {"days": 1, "hours": 0, "minutes": 0}
-    start_date: StartDate = {"day": 1, "month": 1, "year": 2023, "hour": 0}
+    start_date: Optional[ScheduleDate] = Field({"day": 1, "month": 1, "year": 2023, "hour": 0})
+    end_date: Optional[ScheduleDate] = Field({"day": 1, "month": 1, "year": 2024, "hour": 0})
     schedule: Optional[str] = Field(
         None, description="schedule time to run miner")
     file_path: Optional[str] = Field(None, description="miner path")
@@ -39,17 +40,6 @@ class MinerMetadata(BaseModel):
         cron_instance.from_string(schedule)
         return schedule
     
-    @field_validator('start_date', mode='after')
-    @classmethod
-    def convert_month_js_py(cls, start_date):
-        if start_date is None:
-            return None
-        if not isinstance(start_date, dict):
-            raise ValueError("start_date must be dict or None")
-        if "month" in start_date:
-            start_date["month"]+=1#javascript month start from 0 to 11, python month start from 1 to 12
-        return start_date
-        
 
 
 class MinerSpec(BaseModel):
@@ -90,3 +80,7 @@ class HashData(BaseModel):
     route:str
     miner_config:MinerCatalog
     body:Optional[Any]=None
+
+class BackTestRequest(BaseModel):
+    minerCatalog: MinerCatalog
+    code: Code

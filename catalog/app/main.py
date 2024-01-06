@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import config
 from routers import (
-    stream, miner
+    stream, miner,health
 )
 from version import __version__
 from commons.middlewares import catch_exceptions_middleware, add_process_time_header
@@ -31,5 +31,7 @@ app.add_middleware(
 )
 app.middleware('http')(catch_exceptions_middleware)
 app.middleware('http')(add_process_time_header)
+
+app.include_router(health.router,prefix='/health',tags=['health'],)
 app.include_router(stream.router, prefix='/stream', tags=['stream'])
 app.include_router(miner.router, prefix='/miner', tags=['miner'])

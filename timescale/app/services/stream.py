@@ -30,7 +30,9 @@ class StreamService(BaseService):
     def get_stream(self,stream_name:str):
         return self.streamDataManager.get_stream(stream_name)
 
-    def getStreamByCatalog(self, streamCatalog: StreamCatalog, minerCatalog: MinerCatalog=None):
+    def getStreamByCatalog(self, streamCatalog: StreamCatalog, minerCatalog: MinerCatalog=None)->List[Any]:
+        if streamCatalog.metadata.id is None:
+            return []
         stream_name = streamCatalog.metadata.name
         symbol_field = streamCatalog.metadata.symbol_field
         timestamp_field = streamCatalog.metadata.timestamp_field

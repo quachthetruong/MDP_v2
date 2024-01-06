@@ -94,7 +94,6 @@ class ExtractProcessor(MinerProcessor):
         #     result=value["result"] #celery return task_id, result, status, traceback, children, date_done
         # else:
         # cache celery only apply for pipeline not single processor
-        print("key",data.keys())
         result=self.get_inputs(input_streams=data,timestamp=timestamp,code=self.code,
                             target_symbols=self.miner_config.metadata.target_symbols)
         return result

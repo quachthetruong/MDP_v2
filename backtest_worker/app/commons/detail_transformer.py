@@ -4,8 +4,9 @@ from typing import Dict, List
 import numpy as np
 
 import pandas as pd
+from schemas.miner import MinerCatalog
 
-from schemas.miner_unit import MiniNode, Node, Stage, DetailNode,DetailStage
+from schemas.miner_unit import BacktestResult, MiniNode, Node, Stage, DetailNode,DetailStage, StageMetadata
 from schemas.stream_field import StreamField
 from commons.dataframe import normalize_data_type
 
@@ -13,16 +14,20 @@ primary_key_columns = ['symbol_', 'indexed_timestamp_']
 
 
 class DetailTransformer:
-    def __init__(self, stages: List[Stage], target_symbols: List[str]) -> None:
+    def __init__(self, stages: List[Stage], miner_config: MinerCatalog) -> None:
         self.stages = stages
-        self.target_symbols = target_symbols
+        self.miner_config = miner_config
         self.columns: Dict[str, List[StreamField]] = {}
         self.node_names: List[str] = stages[0].nodes.keys() if len(
             stages) > 0 else []
 
-    def transform(self) -> List[DetailStage]:
+    def transform(self) -> BacktestResult:
         self.columns = self.get_pandas_metadata(stages=self.stages)
-        return self.transform_detail_stages(stages=self.stages)
+        detailStages= self.transform_detail_stages(stages=self.stages)
+        stageMetadata= StageMetadata(schedule=self.miner_config.metadata.schedule,
+                                     start_date=self.miner_config.metadata.start_date,
+                                     end_date=self.miner_config.metadata.end_date)
+        return BacktestResult(metadata=stageMetadata, stages=detailStages)
 
     def get_pandas_metadata(self, stages: List[Stage]) -> Dict[str, List[StreamField]]:
         dataframe_per_node = self.group_dataframes_per_node(stages=stages)
@@ -33,6 +38,7 @@ class DetailTransformer:
     def group_dataframes_per_node(self, stages: List[Stage]) -> Dict[str, List[pd.DataFrame]]:
         dataframe_per_node = {node_name: [] for node_name in self.node_names}
         for stage in stages:
+            print(f"stage {stage.nodes.values():}")
             for node in stage.nodes.values():
                 if node.dataframe.empty:
                     continue
@@ -63,7 +69,7 @@ class DetailTransformer:
     def extract_node_detail(self, node: Node) -> DetailNode:
         mini_nodes: List[MiniNode] = []
         mini_node_indexes: Dict[str, int] = {}
-        for index, target_symbol in enumerate(self.target_symbols):
+        for index, target_symbol in enumerate(self.miner_config.metadata.target_symbols):
             mini_nodes.append(MiniNode(symbol=target_symbol, data=[]))
             mini_node_indexes[target_symbol] = index
         
@@ -93,8 +99,7 @@ class DetailTransformer:
 
     def extract_stage_detail(self, stage: Stage) -> DetailStage:
         detailNodes = self.transform_detail_nodes(stage.nodes)
-        return DetailStage(timestamp=stage.timestamp, start_date=stage.start_date,
-                           schedule=stage.schedule, nodes=detailNodes)
+        return DetailStage(timestamp=stage.timestamp, nodes=detailNodes)
 
     def transform_detail_stages(self, stages: List[Stage]) -> List[DetailStage]:
 

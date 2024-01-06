@@ -10,7 +10,7 @@ class TimeStep(TypedDict):
     minutes: int
 
 
-class StartDate(TypedDict):
+class ScheduleDate(TypedDict):
     year: int
     month: int
     day: int

@@ -77,7 +77,7 @@ class TimescaleDataManager(BaseDataManager):
         }
         sql = loader.render("get_record_range.tpl", **args)
         results = self.session.execute(text(sql)).all()
-        logging.info(f"sql:=========== {sql} len: {len(results)}")
+        # logging.info(f"sql:=========== {sql} len: {len(results)}")
         return pd.DataFrame([row._asdict() for row in results])
 
     def get_record(self, table_name: str, indexed_timestamp: str, timestamp_column: str, symbol_column: str,

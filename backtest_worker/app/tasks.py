@@ -18,18 +18,14 @@ logger=logging.getLogger(__name__)
 
 
 
-@celery.task(name='tasks.hello')
-def hello():
+@celery.task(name='tasks.health_check')
+def health_check():
     try: 
-        logger.info(f"conf: {celery.conf}")
-        print("hello world dc r print")
-        value= gzip.compress(str(celery.conf).encode())
-
-        return value
+        print("health_check")
+        return "health_check"
     except Exception as e:
-        print(f"kiem tra hello {e}")
+        print(f"error catch {str(e)}")
         raise e
-        return str(e)
     
 @celery.task(name='tasks.extract')
 def extract(miner_config,extract_streams):
@@ -45,13 +41,15 @@ def extract(miner_config,extract_streams):
         # ### get_input
         pipeline.add_processer(ExtractProcessor(extract_streams=extract_streams))
         print("ExtractProcessor")
-        print("mimic_backrun",miner_config.metadata.start_date)
+        # logging.info(f"mimic_backrun {miner_config.metadata.start_date}")
 
         # ### run
         backtest_simulator=BacktestSimulator(
             schedule=miner_config.metadata.schedule, 
             start_date=datetime(**miner_config.metadata.start_date),
             end_date=datetime.now())
+        
+        print(f"BacktestSimulator {backtest_simulator}")
         
         stages = backtest_simulator.mimic_backrun(pipeline=pipeline)
         # ### split result into multiple symbol
@@ -77,19 +75,24 @@ def mimic_get_input(miner_config, code):
         ### get_input
         pipeline.add_processer(ExtractProcessor(code=code.get_input))
         ### mimic_backrun
+        # logging.info(f"mimic_backrun {miner_config.metadata.start_date}")
         backtest_simulator=BacktestSimulator(
             schedule=miner_config.metadata.schedule, 
             start_date=datetime(**miner_config.metadata.start_date),
-            end_date=datetime.now())
+            end_date=datetime(**miner_config.metadata.end_date))
         
-        stages = backtest_simulator.mimic_backrun(pipeline=pipeline)
-        
+        stages,sys_out = backtest_simulator.mimic_backrun(pipeline=pipeline)#resu
+        # logging.info(f"relog log{log}")
         ### split result into multiple symbol
-        detail_stages= DetailTransformer(stages=stages, target_symbols=miner_config.metadata.target_symbols).transform()
-        detail_stages_json=[detail_stage.model_dump_json() for detail_stage in detail_stages]
+        backtestResult= DetailTransformer(stages=stages, miner_config=miner_config).transform()
+
+        backtestResult.log=sys_out
+        # logging.info(f"backtestResult {backtestResult.log}")
+        # logger.info(f"backtestResult {backtestResult}")
+        # detail_stages_json=[detail_stage.model_dump_json() for detail_stage in detail_stages]
         # logger.info(f"detail_stages_json {type(detail_stages_json)} {str(detail_stages_json)[:100]}")
         # detail_stages_gzip=gzip.compress(str(detail_stages_json).encode())
-        return detail_stages_json
+        return backtestResult.model_dump_json()
     except Exception as e:
         logger.error(f"error catch {str(e)}")
         raise e
@@ -113,14 +116,16 @@ def mimic_process(miner_config, code):
             start_date=datetime(**miner_config.metadata.start_date),
             end_date=datetime.now())
         
-        stages = backtest_simulator.mimic_backrun(pipeline=pipeline)
+        stages,sys_out = backtest_simulator.mimic_backrun(pipeline=pipeline)
+        # print(f"mimic_process log{log}")
         
         ### split result into multiple symbol
-        detail_stages= DetailTransformer(stages=stages, target_symbols=miner_config.metadata.target_symbols).transform()
-        detail_stages_json=[detail_stage.model_dump_json() for detail_stage in detail_stages]
+        backtestResult= DetailTransformer(stages=stages, miner_config=miner_config).transform()
+        backtestResult.log=sys_out
+
         # detail_stages_gzip=gzip.compress(str(detail_stages_json).encode())
         # return detail_stages_gzip
-        return detail_stages_json
+        return backtestResult.model_dump_json()
     except Exception as e:
         logger.error(f"error catch {str(e)}")
         raise e

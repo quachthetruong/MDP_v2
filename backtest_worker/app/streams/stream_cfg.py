@@ -128,4 +128,6 @@ class MinerCfg(BaseModel):
     timestep: timedelta
     start_date: Optional[datetime] = Field(
         datetime(2013, 1, 1, 0, 0, 0), description="start date of miner")
+    end_date: Optional[datetime] = Field(
+        datetime(2024, 1, 1, 0, 0, 0), description="end date of miner")
     version: str

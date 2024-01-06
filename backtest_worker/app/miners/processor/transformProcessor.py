@@ -40,10 +40,17 @@ class TransformProcessor(MinerProcessor):
     def process_all_symbols(self, inputNodes: Dict[str, Node], target_symbols: List[str], timestamp: datetime,code:str) -> Dict[str, Node]:
         outputs: List[Node] = []
         for symbol in target_symbols:
+            input_per_symbol:Dict[str,Node]={}
+            for name,inputNode in inputNodes.items():
+                input_df=inputNode.dataframe
+                currentNode=Node(name=inputNode.name,source=inputNode.source,dataframe=pd.DataFrame(columns=input_df.columns))
+                if not input_df.empty:
+                    currentNode.dataframe = input_df[input_df[config.SYSTEM_SYMBOL_COL] == symbol]
+                input_per_symbol[name]=currentNode
             output = self.process_per_symbol(
-                inputs=inputNodes, symbol=symbol, timestamp=timestamp,code=code)
+                inputs=input_per_symbol, symbol=symbol, timestamp=timestamp,code=code)
             outputs.append(output)
-        return {"output": Node(name="output", source=list(inputNodes.keys()), dataframe=pd.concat(map(lambda x: x.dataframe, outputs)))}
+        return {self.miner_config.metadata.name: Node(name=self.miner_config.metadata.name, source=list(inputNodes.keys()), dataframe=pd.concat(map(lambda x: x.dataframe, outputs)))}
 
     def execute(self,timestamp:datetime,data:Dict[str,Node])-> Dict[str, Node]:
         return self.process_all_symbols(inputNodes=data,timestamp=timestamp,code=self.code,

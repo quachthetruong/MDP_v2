@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from backend.session import create_session
 
-from schemas.miner import Miner, MinerCatalog, MinerSetupCatalog
+from schemas.miner import BackTestRequest, Miner, MinerCatalog, MinerSetupCatalog
 from services.miner import MinerService
 from schemas.other import ValidateForm
 from schemas.miner import Code
@@ -24,9 +24,7 @@ from worker import celery
 router = APIRouter()
 
 
-class BackTestRequest(BaseModel):
-    minerCatalog: MinerCatalog
-    code: Code
+
 
 
 

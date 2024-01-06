@@ -40,7 +40,7 @@ class SetUpProcessor(MinerProcessor):
         input_cfg = self.convert_catalog_to_stream_cfg(input_streams)
         input_streams = {}
         for cfg in input_cfg:
-            input_stream = DataStreamBase.from_config(stream_cfg=cfg)
+            input_stream = DataStreamBase.from_config(target_symbols=self.miner_config.metadata.target_symbols,stream_cfg=cfg)
             input_streams[input_stream.signal_name] = input_stream #use input_stream.metadata.name
         return input_streams
 

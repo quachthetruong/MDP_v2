@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Callable, List,Dict
+import io
+from typing import Callable, List,Dict, Tuple
 from validator.exception import miner_exception_handler
 from miners.pipeline.minerPipeline import MinerPipeline
 from commons.utils import convert_datetime_to_dict
-from schemas.miner_unit import Stage, StartDate,Node
+from schemas.miner_unit import Stage, ScheduleDate,Node
 from cron_converter import Cron
 import logging
+from contextlib import redirect_stdout
 
 
 class BacktestSimulator:
@@ -27,19 +29,21 @@ class BacktestSimulator:
 
     def build_stage(self, timestamp: datetime,pipeline:MinerPipeline) -> Stage:
         nodes = pipeline.trigger(timestamp=timestamp)
-        return Stage(timestamp=timestamp, schedule=self.schedule, start_date=StartDate(**convert_datetime_to_dict(self.start_date)), nodes=nodes)
+        return Stage(timestamp=timestamp, nodes=nodes)
 
     @miner_exception_handler
-    def mimic_backrun(self, pipeline:MinerPipeline) -> List[Stage]:
+    def mimic_backrun(self, pipeline:MinerPipeline) -> Tuple[List[Stage],str]:
         cron_instance = self.get_cron_instance(cron_str=self.schedule, start_date=self.start_date, end_date=self.end_date)
         schedule = cron_instance.schedule(self.start_date)
 
         stages: List[Stage] = []
-        while timestamp := schedule.next():
-            if timestamp < self.end_date:
-                stage = self.build_stage(timestamp=timestamp,pipeline=pipeline)
-                stages.append(stage)
-                
-            else:
-                break
-        return stages
+        f = io.StringIO() # capture print() in user code
+        with redirect_stdout(f):
+            while timestamp := schedule.next():
+                if timestamp < self.end_date:
+                    stage = self.build_stage(timestamp=timestamp,pipeline=pipeline)
+                    stages.append(stage)
+                else:
+                    break
+        logs = f.getvalue()
+        return stages,logs

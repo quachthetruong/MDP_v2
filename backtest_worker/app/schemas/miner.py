@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from cron_converter import Cron
 from schemas.stream import Stream, StreamBase, StreamCatalog, StreamMetadata
-from schemas.other import TimeStep, StartDate
+from schemas.other import TimeStep, ScheduleDate
 
 
 class MinerMetadata(BaseModel):
@@ -12,7 +12,8 @@ class MinerMetadata(BaseModel):
     description: str
     target_symbols: List[str]
     timestep: TimeStep = {"days": 1, "hours": 0, "minutes": 0}
-    start_date: StartDate = {"day": 1, "month": 1, "year": 2023, "hour": 0}
+    start_date: Optional[ScheduleDate] = Field({"day": 1, "month": 1, "year": 2023, "hour": 0})
+    end_date: Optional[ScheduleDate] = Field({"day": 1, "month": 1, "year": 2024, "hour": 0})
     schedule: Optional[str] = Field(
         None, description="schedule time to run miner")
     file_path: Optional[str] = Field(None, description="miner path")

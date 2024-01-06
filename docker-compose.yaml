@@ -55,6 +55,12 @@ services:
       - catalog-local-db
     volumes:
       - ./catalog/app:/app
+    healthcheck:
+      test: curl --fail http://localhost:8002/health || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
 
   timescale-local:
     build: ./timescale
@@ -68,13 +74,12 @@ services:
       test: curl --fail http://localhost:8003/health || exit 1
       interval: 60s
       retries: 5
-      start_period: 20s
+      start_period: 30s
       timeout: 10s
 
-  backtest_worker_1:
+  backtest_worker:
     build: ./backtest_worker
     command: watchmedo auto-restart -d . -p 'tasks.py' -- celery -A tasks worker -l info -E
-    container_name: backtest_worker_1
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis
@@ -83,19 +88,14 @@ services:
       - redis
     volumes:
       - ./backtest_worker/app:/app
-
-  backtest_worker_2:
-    build: ./backtest_worker
-    command: watchmedo auto-restart -d . -p 'tasks.py' -- celery -A tasks worker -l info -E
-    container_name: backtest_worker_2
-    environment:
-      CELERY_BROKER_URL: redis://redis
-      CELERY_RESULT_BACKEND: redis://redis
-    restart: always
-    depends_on:
-      - redis
-    volumes:
-      - ./backtest_worker/app:/app
+    deploy:
+      replicas: 4
+    healthcheck:
+      test: ["CMD-SHELL", "celery inspect ping --destination celery@$$HOSTNAME"]
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
 
   flower:
     build: ./backtest_worker
@@ -107,29 +107,43 @@ services:
       CELERY_RESULT_BACKEND: redis://redis
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
-      interval: 10s
-      timeout: 10s
+      test: curl --fail http://localhost:5555/ || exit 1
+      interval: 60s
       retries: 5
+      start_period: 20s
+      timeout: 10s
     depends_on:
       - redis
     volumes:
       - ./backtest_worker/app:/app
 
-  scheduler:
+  dask_scheduler:
     build: ./dask_worker
-    hostname: scheduler
     ports:
       - "8786:8786"
       - "8787:8787"
-    command: ["dask-scheduler"]
+    restart: always
+    command: "dask scheduler"
+    healthcheck:
+      test: curl --fail http://localhost:8787/health || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
 
-  worker:
+  dask_worker:
     build: ./dask_worker
-    command: ["dask-worker", "tcp://scheduler:8786","--nworkers", "1", "--nthreads", "2", "--memory-limit", "3.5GB", "--death-timeout", "60"]
+    command: "dask worker tcp://dask_scheduler:8786 --nworkers 1 --nthreads 2 --memory-limit 3.5GB --death-timeout 60"
     deploy:
-      replicas: 3
- 
+      replicas: 4
+    restart: always
+    healthcheck:
+      test: curl --fail http://dask_scheduler:8787/health || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
+
     # For Docker swarm you can specify multiple workers, this is ignored by `docker-compose up`
 
 volumes:

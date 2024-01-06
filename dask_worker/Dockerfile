@@ -1,6 +1,8 @@
 # 
 FROM ghcr.io/dask/dask:2023.5.0 
 #version need match on client 
+RUN apt-get update \
+    && apt-get -y install  curl
 
 USER root
 # 
