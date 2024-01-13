@@ -6,6 +6,7 @@ from commons.utils import generated_identified_name
 from schemas.storage_base import StorageType
 from pydantic import field_validator
 from enum import Enum, auto
+from commons.logger import logger
 
 
 valid_types = set(['text', 'timestamp', 'numeric', 'float'])

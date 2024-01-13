@@ -52,8 +52,12 @@ def validate_code(func: callable):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            errors: List[str] = [e.__class__.__name__,
-                                 *traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)]
+            error=e.__class__.__name__
+            if 'timestamp' in kwargs:
+                error=f"{error} at {kwargs['timestamp']}"
+            if 'symbol' in kwargs:
+                error=f"{error} at {kwargs['symbol']}"
+            errors: List[str] = [error,*traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)]
             logging.error(f"validate_code {errors}")
             raise InvalidCode(errors=errors) from e
     return inner_function

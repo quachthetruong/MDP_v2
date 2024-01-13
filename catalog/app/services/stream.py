@@ -99,6 +99,7 @@ class StreamDataManager(BaseDataManager):
         insert_stmt=insert_stmt.on_conflict_do_update(  index_elements=[StreamCfgModel.name],
                                                         set_={col: getattr(insert_stmt.excluded, col) for col in stream_cfg_dict})
         insert_stmt=insert_stmt.returning(StreamCfgModel)
+        logger.info(f"insert_stmt:{insert_stmt}")
         results=self.session.execute(insert_stmt).fetchone()
         return StreamCfgModel(**dict(results._mapping))
     

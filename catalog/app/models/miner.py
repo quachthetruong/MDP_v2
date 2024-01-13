@@ -23,7 +23,10 @@ class MinerCfgModel(SQLModel):
     start_date_month: Mapped[int] = mapped_column("start_date_month")
     start_date_year: Mapped[int] = mapped_column("start_date_year")
     start_date_hour: Mapped[int] = mapped_column("start_date_hour")
-    file_path: Mapped[str] = mapped_column("file_path")
+    end_date_day: Mapped[int] = mapped_column("end_date_day")
+    end_date_month: Mapped[int] = mapped_column("end_date_month")
+    end_date_year: Mapped[int] = mapped_column("end_date_year")
+    end_date_hour: Mapped[int] = mapped_column("end_date_hour")
 
     streams = relationship("MinerStreamRelationshipModel", back_populates='miner_cfg')
 
@@ -40,6 +43,13 @@ class MinerStreamRelationshipModel(SQLModel):
 
 # class MinerStreamRelationship(object):
 #     pass
+
+class MinerCode(SQLModel):
+    __tablename__ = "miner_code"
+    id: Mapped[int] = mapped_column("id", primary_key=True)
+    miner_id: Mapped[int] = mapped_column("miner_id",ForeignKey("miner_cfg.id"))
+    extract_code: Mapped[str] = mapped_column("extract_code")
+    transform_code: Mapped[str] = mapped_column("transform_code")
 
 
     

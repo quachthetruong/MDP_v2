@@ -38,7 +38,7 @@ class DetailTransformer:
     def group_dataframes_per_node(self, stages: List[Stage]) -> Dict[str, List[pd.DataFrame]]:
         dataframe_per_node = {node_name: [] for node_name in self.node_names}
         for stage in stages:
-            print(f"stage {stage.nodes.values():}")
+            # print(f"stage {stage.nodes.values():}")
             for node in stage.nodes.values():
                 if node.dataframe.empty:
                     continue
@@ -91,6 +91,7 @@ class DetailTransformer:
     def transform_detail_nodes(self, nodes: Dict[str, Node]) -> List[DetailNode]:
         detailNodes: List[DetailNode] = []
         for node_name, node in nodes.items():
+            logging.info(f"node_name {node_name}")
             detailNode = self.extract_node_detail(node=node)
             detailNode.columns = self.columns[node_name]
             detailNodes.append(detailNode)

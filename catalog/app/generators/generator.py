@@ -1,6 +1,6 @@
 import importlib
 import logging
-from schemas.miner import Miner
+from schemas.miner import Code, Miner
 from commons.template_loader import TemplateLoader
 from commons.utils import camel_case
 import os
@@ -12,9 +12,9 @@ def get_class(miner_name: str):
     return getattr(module, miner_class)
 
 
-def generate_miner(minerCatalog: Miner, get_inputs_str: str = None, process_per_symbol_str: str = None, miner_generate_path="miners/"):
+def generate_miner(minerCatalog: Miner, code:Code, miner_generate_path="miners/"):
     loader = TemplateLoader()
-    args = {'metadata': minerCatalog.metadata, 'spec': minerCatalog.spec, 'get_inputs_str': get_inputs_str, 'process_per_symbol_str': process_per_symbol_str,
+    args = {'metadata': minerCatalog.metadata, 'spec': minerCatalog.spec, 'get_inputs_str': code.get_input, 'process_per_symbol_str': code.process_per_symbol,
             "func": {"camel_case": camel_case}}
     minerCode = loader.render("miner_code_full.tpl", **args)
     file_path = f"{miner_generate_path}{minerCatalog.metadata.name}.py"

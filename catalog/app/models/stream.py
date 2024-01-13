@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -13,7 +13,7 @@ from models.base import SQLModel
 class StreamCfgModel(SQLModel):
     __tablename__ = "stream_cfg"
 
-    id: Mapped[int] = mapped_column("id", primary_key=True)
+    id: Mapped[int] = mapped_column("id", primary_key=True, autoincrement=True,server_default=func.nextval('stream_cfg_id_seq'))
     name: Mapped[str] = mapped_column("name")
     description: Mapped[str] = mapped_column("description")
     signal_name: Mapped[str] = mapped_column("signal_name")

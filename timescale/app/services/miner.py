@@ -53,7 +53,7 @@ class MinerService(BaseService):
         minerCatalog = self.getCatalog(miner_config)
         # logger.info(f"minerCatalog {minerCatalog}")    
         minerCatalog.spec.input_streams = self.reOrderStreamCatalog(miner_config, minerCatalog)
-        logger.info(f"after reorder minerCatalog success")
+        # logger.info(f"after reorder minerCatalog success")
         stream_datas = [self.streamService.getStreamByCatalog(streamCatalog=streamCatalog, minerCatalog=minerCatalog)
                 for streamCatalog in minerCatalog.spec.input_streams]
         streams=[Stream(catalog=catalog,data=data) for catalog,data in zip(minerCatalog.spec.input_streams,stream_datas)]

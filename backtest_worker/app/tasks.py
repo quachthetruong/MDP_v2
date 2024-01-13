@@ -49,7 +49,7 @@ def extract(miner_config,extract_streams):
             start_date=datetime(**miner_config.metadata.start_date),
             end_date=datetime.now())
         
-        print(f"BacktestSimulator {backtest_simulator}")
+        # print(f"BacktestSimulator {backtest_simulator}")
         
         stages = backtest_simulator.mimic_backrun(pipeline=pipeline)
         # ### split result into multiple symbol

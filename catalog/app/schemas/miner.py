@@ -17,8 +17,6 @@ class MinerMetadata(BaseModel):
     end_date: Optional[ScheduleDate] = Field({"day": 1, "month": 1, "year": 2024, "hour": 0})
     schedule: Optional[str] = Field(
         None, description="schedule time to run miner")
-    file_path: Optional[str] = Field(None, description="miner path")
-
     @field_validator('target_symbols', mode='before')
     @classmethod
     def check_target_symbols(cls, target_symbols):
@@ -67,3 +65,7 @@ class MinerStreamRelationship(BaseModel):
 class Code(BaseModel):
     get_input: str
     process_per_symbol: str
+
+class BackTestRequest(BaseModel):
+    minerCatalog: Miner
+    code: Code

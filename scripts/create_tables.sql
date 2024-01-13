@@ -40,7 +40,9 @@ create table miner_stream_relationship
     miner_id  integer     not null,
     stream_id integer     not null,
     type      varchar(50) not null,
+    code_id   integer     null,
     primary key (miner_id, stream_id, type)
+
 );
 
 alter table miner_stream_relationship
@@ -63,27 +65,6 @@ alter table stream_fields
 create unique index stream_id_name
     on stream_fields (stream_id, name);
 
-create table miner_cfg_v2
-(
-    id               integer,
-    name             varchar(255),
-    description      text,
-    target_symbols   text,
-    schedule         varchar(50),
-    timestep_days    integer,
-    timestep_minutes integer,
-    start_date_year  integer,
-    start_date_month integer,
-    start_date_day   integer,
-    start_date_hour  integer,
-    timestep_hours   integer,
-    input_streams    character varying[],
-    input_sources    character varying[],
-    output_stream    character varying[]
-);
-
-alter table miner_cfg_v2
-    owner to postgres;
 
 create table miner_cfg
 (
@@ -103,7 +84,11 @@ create table miner_cfg
     start_date_month integer     default 0                                      not null,
     start_date_day   integer     default 0                                      not null,
     start_date_hour  integer     default 0                                      not null,
-    file_path        text
+    end_date_year    integer     default 0                                      not null,
+    end_date_month   integer     default 0                                      not null,
+    end_date_day     integer     default 0                                      not null,
+    end_date_hour    integer     default 0                                      not null,
+    
 );
 
 alter table miner_cfg
@@ -111,26 +96,13 @@ alter table miner_cfg
 
 alter sequence miner_cfg_id_seq1 owned by miner_cfg.id;
 
-create table miner_cfg_v4
+create table miner_code
 (
-    id               integer,
-    name             varchar(255),
-    description      text,
-    target_symbols   text,
-    schedule         varchar(50),
-    timestep_days    integer,
-    timestep_hours   integer,
-    timestep_minutes integer,
-    start_date_year  integer,
-    start_date_month integer,
-    start_date_day   integer,
-    start_date_hour  integer,
-    file_path        text,
-    input_streams    character varying[],
-    input_sources    character varying[],
-    output_stream    character varying[]
+    id                serial    primary key,
+    extract_code      text      default ''::text not null,
+    transform_code    text      default ''::text not null,
+    file_path         text      default ''::text not null,
 );
 
-alter table miner_cfg_v4
+alter table miner_code
     owner to postgres;
-

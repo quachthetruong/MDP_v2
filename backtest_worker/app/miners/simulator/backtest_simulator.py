@@ -40,6 +40,9 @@ class BacktestSimulator:
         f = io.StringIO() # capture print() in user code
         with redirect_stdout(f):
             while timestamp := schedule.next():
+                print("*" * 50)
+                print(f"Execution time: {timestamp}")
+                print("*" * 50)
                 if timestamp < self.end_date:
                     stage = self.build_stage(timestamp=timestamp,pipeline=pipeline)
                     stages.append(stage)

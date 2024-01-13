@@ -93,6 +93,7 @@ class TimescaleDataManager(BaseDataManager):
             "limit": limit
         }
         sql = loader.render("get_record.tpl", **args)
+        # logging.info(f"sql:=========== {sql}")
         results = self.session.execute(text(sql)).all()
         return pd.DataFrame([row._asdict() for row in results])
 

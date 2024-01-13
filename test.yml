@@ -1,24 +1,40 @@
 kind: miner
 metadata:
-  description: test miner 2
-  name: miner_test_2
-  schedule: 0 0 1 1 *
-  start_date:
-    day: 1
-    hour: 0
-    month: 1
-    year: 2020
+  id: 0
+  name: output
+  description: Chào
   target_symbols:
     - VND
     - VUA
+    - STB
+    - VCB
+    - MBB
   timestep:
     days: 1
     hours: 0
     minutes: 0
+  start_date:
+    year: 2018
+    month: 0
+    day: 1
+    hour: 0
+  end_date:
+    year: 2025
+    month: 11
+    day: 24
+    hour: 0
+  schedule: 0 0 1 1 *
+  hours:
+    days: 1
+    hours: 1
+    minutes: 0
+  minutes: 1
+  days:
+    days: 2
+    hours: 0
+    minutes: 0
 spec:
   input_streams:
-    - name: wifeed_bctc_thuyet_minh_chung_khoan
-    - name: calculate_bctc_nam_chung_khoan_1d0h0m_1
-    - name: wifeed_bctc_luu_chuyen_tien_te_chung_khoan
-  output_stream:
-    name: stream_test
+    - wifeed_bctc_thuyet_minh_chung_khoan
+    - calculate_bctc_nam_chung_khoan_1d0h0m_1
+    - wifeed_bctc_luu_chuyen_tien_te_chung_khoan

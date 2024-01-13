@@ -50,7 +50,7 @@ class TransformProcessor(MinerProcessor):
             output = self.process_per_symbol(
                 inputs=input_per_symbol, symbol=symbol, timestamp=timestamp,code=code)
             outputs.append(output)
-        return {self.miner_config.metadata.name: Node(name=self.miner_config.metadata.name, source=list(inputNodes.keys()), dataframe=pd.concat(map(lambda x: x.dataframe, outputs)))}
+        return {outputs[0].name: Node(name=outputs[0].name, source=list(inputNodes.keys()), dataframe=pd.concat(map(lambda x: x.dataframe, outputs)))}
 
     def execute(self,timestamp:datetime,data:Dict[str,Node])-> Dict[str, Node]:
         return self.process_all_symbols(inputNodes=data,timestamp=timestamp,code=self.code,

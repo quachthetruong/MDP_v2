@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from commons.miner_adapter import convert_miner_catalog_to_miner_cfg
 from generators.generator import generate_miner
 from commons.logger import logger
 from typing import Any, List, Optional, TypedDict
@@ -9,8 +10,8 @@ from sqlalchemy.dialects.postgresql import insert
 from commons.file import  get_files,get_all_files
 
 
-from models.miner import MinerCfgModel, MinerStreamRelationshipModel
-from schemas.miner import Miner, MinerMetadata, MinerSetup, MinerSpec, MinerStreamRelationship, Code
+from models.miner import MinerCfgModel, MinerCode, MinerStreamRelationshipModel
+from schemas.miner import BackTestRequest, Miner, MinerMetadata, MinerSetup, MinerSpec, MinerStreamRelationship, Code
 from services.base import (
     BaseDataManager,
     BaseService,
@@ -52,12 +53,9 @@ class MinerService(BaseService):
         specs=[self.extract_miner_spec(miner,format=StreamFormat.Base) for miner in miners]
         return [Miner(metadata=MinerMetadata(**miner.to_dict()),spec=spec) for miner,spec in zip(miners,specs)]
     
-    def save_miner(self,miner:Miner)->Miner:
+    def save_miner_metadata(self,minerMetadata:MinerMetadata)->Miner:
         # logger.info(f"miner:{miner.model_dump()}")
-        metadata,spec=miner.metadata,miner.spec
-        save_miner_cfg=self.MinerDataManager.save_miner_cfg(metadata)
-        save_stream_spec=self.save_stream_relation(spec,save_miner_cfg.id)
-
+        save_miner_cfg=self.MinerDataManager.save_miner_cfg(minerMetadata)
         return self.get_miner(miner_names=[save_miner_cfg.name])[0]
     
     def save_stream_relation(self,miner_spec:MinerSpec,miner_id:int)->List[MinerStreamRelationship]:
@@ -68,19 +66,27 @@ class MinerService(BaseService):
         save_stream_spec=self.MinerDataManager.save_stream_relation(stream_ids,stream_types,miner_id)
         return [MinerStreamRelationship(**stream.to_dict()) for stream in save_stream_spec]
     
-    def save_miner_full(self,miner:Miner,code:Code)->Miner:
-        ###step1: save miner file code
-        file_path=self.save_file(miner_config=miner,code=code)
-        ###step2: create table for output stream
-        output_stream=self.streamService.create_table(miner.spec.output_stream)
-        ###step3: save output stream_cfg
-        output_stream=self.streamService.save_stream(miner.spec.output_stream)
+    def save_code(self,code:Code,miner_id:int)->Code:
+        save_code=self.MinerDataManager.save_code(code,miner_id)
+        return Code(get_input=save_code.extract_code,process_per_symbol=save_code.transform_code)
+    
+    def save_miner_full(self,backtestRequest:BackTestRequest)->Miner:
+        minerCatalog,code=backtestRequest.minerCatalog,backtestRequest.code
+      
+        ###step1: create table for output stream
+        output_stream=self.streamService.create_table(minerCatalog.spec.output_stream)
+        ###step2: save output stream_cfg
+        output_stream=self.streamService.save_stream(minerCatalog.spec.output_stream)
         # raise HTTPException(status_code=400, detail="test transaction")
         if output_stream is None:
             raise HTTPException(status_code=400, detail="output stream not found")
-        miner.metadata.file_path=file_path
-        ###step4: save miner config
-        miner=self.save_miner(miner)
+        # miner.metadata.file_path=file_path
+        ###step3: save miner config
+        miner=self.save_miner_metadata(minerCatalog.metadata)
+        ###step4: save miner stream relation
+        self.save_stream_relation(minerCatalog.spec,miner.metadata.id)
+        ###step5: save code
+        code=self.save_code(miner_id=miner.metadata.id,code=code)
         return miner
 
     # def verify_stream(self,stream_name:str)->Stream:
@@ -90,15 +96,14 @@ class MinerService(BaseService):
     #         raise Exception(f"stream {stream_name} not found")
     #     return streams[0]
     def verify(self,miner:MinerSetup)->Miner:
-        logger.info(f"start verify")
+        # logger.info(f"start verify")
         metadata,spec=miner.metadata,miner.spec
         input_streams=self.streamService.get_streams(stream_names=[stream for stream in spec.input_streams]) 
-        logger.info(f"return get_streams {spec.input_streams} input_streams {[stream.metadata.name for stream in input_streams]}")
+        # logger.info(f"return get_streams {spec.input_streams} input_streams {[stream.metadata.name for stream in input_streams]}")
         return Miner(metadata=metadata,spec={"input_streams":input_streams})
     
-    def save_file(self,miner_config:Miner,code:Code)->str:
-        file_path =generate_miner(minerCatalog=miner_config,get_inputs_str=code.get_input,
-                                       process_per_symbol_str=code.process_per_symbol)
+    def save_file(self,backtestRequest:BackTestRequest)->str:
+        file_path =generate_miner(minerCatalog=backtestRequest.minerCatalog,code=backtestRequest.code)
         return file_path
     
     def get_miner_files(self,miner_names: List[str]=[])->dict:
@@ -125,16 +130,8 @@ class MinerDataManager(BaseDataManager):
         query = select(MinerCfgModel).limit(limit).offset(offset).order_by(MinerCfgModel.id)
         return self.get_all(query)
         
-    def save_miner_cfg(self,miner_cfg:MinerMetadata)->MinerCfgModel:
-        miner_cfg_dict=miner_cfg.model_dump()
-        miner_cfg_dict['timestep_hours']=miner_cfg_dict['timestep']['hours']
-        miner_cfg_dict['timestep_days']=miner_cfg_dict['timestep']['days']
-        miner_cfg_dict['timestep_minutes']=miner_cfg_dict['timestep']['minutes']
-        miner_cfg_dict['start_date_month']=miner_cfg_dict['start_date']['month']
-        miner_cfg_dict['start_date_day']=miner_cfg_dict['start_date']['day']
-        miner_cfg_dict['start_date_year']=miner_cfg_dict['start_date']['year']
-        miner_cfg_dict['start_date_hour']=miner_cfg_dict['start_date']['hour']
-        del miner_cfg_dict['timestep'],miner_cfg_dict['id'],miner_cfg_dict['start_date']
+    def save_miner_cfg(self,minerCatalog:MinerMetadata)->MinerCfgModel:
+        miner_cfg_dict=convert_miner_catalog_to_miner_cfg(minerCatalog)
         insert_stmt = insert(MinerCfgModel.__table__).values(miner_cfg_dict)
         insert_stmt=insert_stmt.on_conflict_do_update(  index_elements=[MinerCfgModel.name],
                                                         set_={col: getattr(insert_stmt.excluded, col) for col in miner_cfg_dict})
@@ -151,3 +148,13 @@ class MinerDataManager(BaseDataManager):
         insert_stmt=insert_stmt.returning(MinerStreamRelationshipModel)
         results=self.session.execute(insert_stmt).fetchall()
         return list(MinerStreamRelationshipModel(**dict(row._mapping)) for row in results)
+    
+    def save_code(self,code:Code,miner_id:int)->MinerCode:
+        insert_stmt = insert(MinerCode.__table__).values(
+            {'miner_id':miner_id,'extract_code':code.get_input,'transform_code':code.process_per_symbol})
+        insert_stmt=insert_stmt.on_conflict_do_update(  
+            index_elements=[MinerCode.id],
+            set_={'extract_code':insert_stmt.excluded.extract_code,'transform_code':insert_stmt.excluded.transform_code})
+        insert_stmt=insert_stmt.returning(MinerCode)
+        results=self.session.execute(insert_stmt).fetchone()
+        return MinerCode(**dict(results._mapping))

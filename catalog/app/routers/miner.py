@@ -10,17 +10,12 @@ from sqlalchemy.orm import Session
 
 from backend.session import create_session
 
-from schemas.miner import Miner, Code, MinerSetup
+from schemas.miner import BackTestRequest, Miner, Code, MinerSetup
 from services.miner import MinerService
 from commons.logger import logger
 
 
 router = APIRouter(responses={404: {"description": "Not found bal bla"}})
-
-
-class SaveRequest(BaseModel):
-    minerCatalog: Miner
-    code: Code
 
 
 @router.get("/")
@@ -51,12 +46,13 @@ async def save_miner(
 
 @router.post("/save_full_cfg")
 async def save_miner_full(
-    saveRequest: SaveRequest,
+    saveRequest: BackTestRequest,
     session: Session = Depends(create_session),
 ) -> Miner:
     """Create a new stream."""
     # logger.info(f"miner:{miner.model_dump()}")
-    return MinerService(session).save_miner_full(miner=saveRequest.minerCatalog, code=saveRequest.code)
+    logger.info("saveRequest***********************************")
+    return MinerService(session).save_miner_full(backtestRequest=saveRequest)
 
 
 @router.post("/verify")
@@ -68,7 +64,7 @@ async def verify_miner(
     return MinerService(session).verify(miner)
 
 @router.post("/save_file")
-async def save_file(testProcess: SaveRequest, session: Session = Depends(create_session)):
+async def save_file(testProcess: BackTestRequest, session: Session = Depends(create_session)):
     return MinerService(session).save_file(miner_config=testProcess.minerCatalog, code=testProcess.code)
 
 
