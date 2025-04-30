@@ -1,4 +1,4 @@
-# Market Data Platform repo 2
+# Market Data Platform
 
 The Market Data Platform is an **online Integrated Development Environment (IDE)** designed to create, execute, and analyze custom financial indicators from market data. It leverages Celery and Dask for efficient parallel processing, enabling scalable and high-performance computation.
 
